@@ -8,7 +8,6 @@ class CustomUser(AbstractUser):
     first_name = models.CharField('first name', max_length=150)
     last_name = models.CharField('last name', max_length=150)
 
-
     def __str__(self):
         return f'{self.last_name} {self.first_name}'
 
@@ -28,6 +27,4 @@ class Follow(models.Model):
     class Meta:
         UniqueConstraint(fields=['user', 'author'], name='unique_follower')
 
-    def __str__(self):
-        return f'Подписка {self.user} на {self.author}'
 

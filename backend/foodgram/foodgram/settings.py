@@ -98,9 +98,9 @@ DATABASES = {
         'ENGINE': os.getenv(
             'DB_ENGINE', default='django.db.backends.postgresql'
         ),
-        'NAME': os.getenv('DB_NAME', default='postgres'),
-        'USER': os.getenv('POSTGRES_USER', default='postgres'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', default='postgres'),
+        'NAME': os.getenv('DB_NAME', default='foodgrame_db'),
+        'USER': os.getenv('POSTGRES_USER', default='foodgrame_user'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', default='xxxyyyzzz'),
         'HOST': os.getenv('DB_HOST', default='localhost'),
         'PORT': os.getenv('DB_PORT', default='5432'),
     }
@@ -142,8 +142,11 @@ DJOSER = {
         'current_user': 'api.serializers.CustomUserSerializer',
         'user_create': 'api.serializers.CustomUserCreateSerializer',
     },
-    'LOGIN_FIELD': 'email',
+    'PERMISSIONS': {
+        'user_list': ['rest_framework.permissions.AllowAny'],
+    },
     'HIDE_USERS': False,
+    'LOGIN_FIELD': 'email',
 }
 
 
