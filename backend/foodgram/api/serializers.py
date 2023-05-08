@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 
 from recipes.models import Tag, Ingredient, Recipe, IngredientRecipe, TagRecipe
-from .serializers_fields import Hex2NameColor, Base64ImageField
+from .serializers_fields import Hex2NameColor, Base64ImageField, TagListField
 
 USER = get_user_model()
 
@@ -43,11 +43,7 @@ class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         fields = ('id', 'name', 'color', 'slug')
-        extra_kwargs = {
-            'name': {'read_only': True},
-            'color': {'read_only': True},
-            'slug': {'read_only': True},
-        }
+        read_only_fields = ('name', 'color', 'slug')
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -70,25 +66,26 @@ class AddIngredientSerializer(serializers.ModelSerializer):
 
 class RecipeSerializer(serializers.ModelSerializer):
     ingredients = AddIngredientSerializer(many=True)
-    tags = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    tags = TagListField()
     image = Base64ImageField(required=False, allow_null=True)
+    author = serializers.PrimaryKeyRelatedField(
+        read_only=True, default=serializers.CurrentUserDefault()
+    )
 
     class Meta:
         model = Recipe
-        fields = ('name', 'image', 'text', 'cooking_time', 'ingredients', 'tags')
+        fields = ('id', 'tags', 'author', 'ingredients', 'name', 'image', 'text', 'cooking_time')
 
     def to_representation(self, obj):
-        self.fields['ingredients'] = IngredientSerializer(many=True)
-        self.fields['tags'] = TagSerializer(many=True)
+        self.fields['ingredients'] = IngredientSerializer(many=True, source='ingredient')
+        self.fields['tags'] = TagSerializer(many=True, source='tag')
         self.fields['author'] = CustomUserSerializer()
         return super().to_representation(obj)
 
     def create(self, validated_data):
-        request = self.context.get('request')
-        user = USER.objects.get(id=request.user.id)
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
-        recipe = Recipe.objects.create(author=user, **validated_data)
+        recipe = Recipe.objects.create(**validated_data)
         obj_tag_recipe = []
         obj_ingredient_recipe = []
 
@@ -98,14 +95,51 @@ class RecipeSerializer(serializers.ModelSerializer):
             )
         IngredientRecipe.objects.bulk_create(obj_ingredient_recipe)
 
-        for tag in tags:
+        for tag in tags.values():
             obj_tag_recipe.append(
-                TagRecipe(recipe=recipe, *tag)
+                TagRecipe(recipe=recipe, tag=tag)
             )
         TagRecipe.objects.bulk_create(obj_tag_recipe)
 
         return recipe
 
+    # def update(self, instance, validated_data):
+    #     instance.name = validated_data.get('name', instance.name)
+    #     instance.color = validated_data.get('color', instance.color)
+    #     instance.birth_year = validated_data.get(
+    #         'birth_year', instance.birth_year
+    #         )
+    #     instance.image = validated_data.get('image', instance.image)
+    #     if 'achievements' in validated_data:
+    #         achievements_data = validated_data.pop('achievements')
+    #         lst = []
+    #         for achievement in achievements_data:
+    #             current_achievement, status = Achievement.objects.get_or_create(
+    #                 **achievement
+    #                 )
+    #             lst.append(current_achievement)
+    #         instance.achievements.set(lst)
+    #
+    #     instance.save()
+    #     return instance
 
     def update(self, instance, validated_data):
-        ...
+
+        instance.name = validated_data.get('name', instance.name)
+        instance.image = validated_data.get('image', instance.image)
+        instance.text = validated_data.get('text', instance.text)
+        instance.cooking_time = validated_data.get(
+            'cooking_time', instance.cooking_time
+            )
+
+        ingredients = validated_data.pop('ingredients')
+        tags = validated_data.pop('tags')
+
+        obj_tag_recipe = []
+        obj_ingredient_recipe = []
+
+        # for ingredient in ingredients:
+        #     query, status = IngredientRecipe.objects.get_or_create()
+        # lst.append(current_achievement)
+
+
