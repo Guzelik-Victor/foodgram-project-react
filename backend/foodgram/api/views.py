@@ -1,15 +1,14 @@
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from djoser.views import UserViewSet
-from rest_framework import viewsets
-from rest_framework.exceptions import PermissionDenied
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny
-from rest_framework.viewsets import ViewSet
+from rest_framework import viewsets, filters, permissions
 
-from api.serializers import CustomUserSerializer
-from users.models import Follow
+from .serializers import TagSerializer, IngredientSerializer, RecipeSerializer
+from recipes.models import Tag, Ingredient, Recipe
+
 
 User = get_user_model()
+
+
 class CustomUserViewSet(UserViewSet):
 
     def get_queryset(self):
@@ -20,8 +19,19 @@ class CustomUserViewSet(UserViewSet):
         return queryset
 
 
+class TagViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = TagSerializer
+    queryset = Tag.objects.all()
 
 
+class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = IngredientSerializer
+    queryset = Ingredient.objects.all()
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('^name',)
 
 
-
+class RecipeViewSet(viewsets.ModelViewSet):
+    serializer_class = RecipeSerializer
+    queryset = Recipe.objects.all()
+    permission_classes = (permissions.AllowAny,)

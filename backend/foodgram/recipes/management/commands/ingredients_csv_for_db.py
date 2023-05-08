@@ -26,7 +26,7 @@ class Command(BaseCommand):
             with open(file_path, encoding='utf8') as file:
                 obj_list = []
                 reader = csv.reader(file)
-                for i, row in enumerate(reader):
+                for i, row in enumerate(reader, start=1):
                     obj_list.append(Ingredient(i, *row))
                 Ingredient.objects.bulk_create(obj_list)
             logger.info('Данные успешно записаны в БД')
