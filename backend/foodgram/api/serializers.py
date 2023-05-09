@@ -4,6 +4,7 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
 from recipes.models import Tag, Ingredient, Recipe, IngredientRecipe, TagRecipe, Favorite
+from users.models import Follow
 from .serializers_fields import Hex2NameColor, Base64ImageField, TagListField
 
 USER = get_user_model()
@@ -19,8 +20,6 @@ class CustomUserSerializer(UserSerializer):
             'password': {'write_only': True},
         }
 
-
-    # TODO проверять через exists
     def get_is_subscribed(self, obj):
         user = None
         request = self.context.get('request')
@@ -28,8 +27,8 @@ class CustomUserSerializer(UserSerializer):
             user = USER.objects.get(id=request.user.id) if request.user.id else None
         if not user:
             return False
-        following = user.follower.values_list('author_id', flat=True)
-        return obj.id in following
+        follower = user.follower.filter(author=obj.id).exists()
+        return follower
 
 
 class CustomUserCreateSerializer(UserCreateSerializer):
@@ -37,6 +36,36 @@ class CustomUserCreateSerializer(UserCreateSerializer):
     class Meta:
         model = USER
         fields = ('email', 'id', 'username', 'first_name', 'last_name', 'password')
+
+
+class RecipeNestedSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField()
+    image = Base64ImageField(required=False, allow_null=True)
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
+        read_only = fields
+
+
+class UserRecipesSerializer(CustomUserSerializer):
+    recipes = RecipeNestedSerializer(many=True)
+
+    class Meta:
+        fields = CustomUserSerializer.Meta.fields + ('recipes',)
+        depth = 1
+
+
+class FollowSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Follow
+        fields = ('user', 'author')
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Follow.objects.all(),
+                fields=('user', 'author')
+            )
+        ]
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -138,23 +167,11 @@ class RecipeSerializer(serializers.ModelSerializer):
         return instance
 
 
-class RecipeFavoriteSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Recipe
-        fields = ('id', 'name', 'image', 'cooking_time')
-
-
 class FavoriteSerializer(serializers.ModelSerializer):
-    recipe = serializers.SlugRelatedField(
-        slug_field='id',
-        queryset=Recipe.objects.all(),
-    )
 
     class Meta:
         model = Favorite
         fields = ('user', 'recipe')
-        write_only_fields = ('user', 'recipe')
         validators = [
             UniqueTogetherValidator(
                 queryset=Favorite.objects.all(),
@@ -162,9 +179,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
             )
         ]
 
-    def to_representation(self, obj):
-        self.fields['fields'] = RecipeFavoriteSerializer()
-        return super().to_representation(obj)
+
 
 
 

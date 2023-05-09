@@ -6,7 +6,7 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .serializers import TagSerializer, IngredientSerializer, RecipeSerializer, FavoriteSerializer, RecipeFavoriteSerializer
+from .serializers import TagSerializer, IngredientSerializer, RecipeSerializer, FavoriteSerializer, RecipeNestedSerializer
 from recipes.models import Tag, Ingredient, Recipe, Favorite
 
 
@@ -21,6 +21,10 @@ class CustomUserViewSet(UserViewSet):
         if self.action == 'list' and not user.is_staff:
             queryset = queryset.exclude(is_staff=True)
         return queryset
+
+    # @action(methods=['list'])
+    # def subscriptions(self, request):
+    #     self.queryset = self.queryset.
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -48,16 +52,25 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(methods=['post', 'delete'], detail=True)
     def favorite(self, request, pk):
+        recipe = Recipe.objects.get(id=pk)
         user_id = request.user.id
         if request.method == 'POST':
             serializer = FavoriteSerializer(
                 data={
                     'user': user_id,
-                    'recipe': pk,
+                    'recipe': recipe.id,
                 })
             if serializer.is_valid():
                 serializer.save()
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
+                data = {
+                    'id': recipe.id,
+                    'name': recipe.text,
+                    'image': recipe.image,
+                    'cooking_time': recipe.cooking_time,
+                }
+                serializer = RecipeNestedSerializer(data=data)
+                if serializer.is_valid():
+                    return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
             favorite = Favorite.objects.filter(
