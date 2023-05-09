@@ -1,9 +1,13 @@
 from django.contrib.auth import get_user_model
 from djoser.views import UserViewSet
-from rest_framework import viewsets, filters, permissions
+from rest_framework import viewsets, filters, permissions, mixins, status
+from rest_framework.decorators import action
+from rest_framework.generics import GenericAPIView
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from .serializers import TagSerializer, IngredientSerializer, RecipeSerializer
-from recipes.models import Tag, Ingredient, Recipe
+from .serializers import TagSerializer, IngredientSerializer, RecipeSerializer, FavoriteSerializer, RecipeFavoriteSerializer
+from recipes.models import Tag, Ingredient, Recipe, Favorite
 
 
 User = get_user_model()
@@ -41,3 +45,31 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         serializer.save(author=self.request.user)
+
+    @action(methods=['post', 'delete'], detail=True)
+    def favorite(self, request, pk):
+        user_id = request.user.id
+        if request.method == 'POST':
+            serializer = FavoriteSerializer(
+                data={
+                    'user': user_id,
+                    'recipe': pk,
+                })
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            favorite = Favorite.objects.filter(
+                user=user_id,
+                recipe=pk,
+            )
+            if favorite:
+                favorite.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+

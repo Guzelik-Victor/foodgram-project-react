@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from djoser.serializers import UserSerializer, UserCreateSerializer
 from rest_framework import serializers
-
+from rest_framework.validators import UniqueTogetherValidator
 
 from recipes.models import Tag, Ingredient, Recipe, IngredientRecipe, TagRecipe, Favorite
 from .serializers_fields import Hex2NameColor, Base64ImageField, TagListField
@@ -19,6 +19,8 @@ class CustomUserSerializer(UserSerializer):
             'password': {'write_only': True},
         }
 
+
+    # TODO проверять через exists
     def get_is_subscribed(self, obj):
         user = None
         request = self.context.get('request')
@@ -136,11 +138,36 @@ class RecipeSerializer(serializers.ModelSerializer):
         return instance
 
 
+class RecipeFavoriteSerializer(serializers.ModelSerializer):
 
-        #
-        # validators = [
-        #     UniqueTogetherValidator(
-        #         queryset=Cat.objects.all(),
-        #         fields=('name', 'owner')
-        #     )
-        # ]
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
+
+
+class FavoriteSerializer(serializers.ModelSerializer):
+    recipe = serializers.SlugRelatedField(
+        slug_field='id',
+        queryset=Recipe.objects.all(),
+    )
+
+    class Meta:
+        model = Favorite
+        fields = ('user', 'recipe')
+        write_only_fields = ('user', 'recipe')
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Favorite.objects.all(),
+                fields=('user', 'recipe')
+            )
+        ]
+
+    def to_representation(self, obj):
+        self.fields['fields'] = RecipeFavoriteSerializer()
+        return super().to_representation(obj)
+
+
+
+
+
+
