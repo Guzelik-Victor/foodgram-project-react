@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
+from django.db.models import UniqueConstraint
 
 user = get_user_model()
 
@@ -45,7 +46,7 @@ class IngredientRecipe(models.Model):
     amount = models.PositiveSmallIntegerField()
 
 
-class Favorites(models.Model):
+class Favorite(models.Model):
     user = models.ForeignKey(
         user,
         related_name='favorites',
@@ -56,6 +57,9 @@ class Favorites(models.Model):
         related_name='favorites',
         on_delete=models.CASCADE,
     )
+
+    class Meta:
+        UniqueConstraint(fields=['user', 'recipe'], name='unique_recipe')
 
 
 class ShoppingList(models.Model):
