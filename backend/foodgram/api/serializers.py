@@ -27,7 +27,7 @@ class CustomUserSerializer(UserSerializer):
             user = USER.objects.get(id=request.user.id) if request.user.id else None
         if not user:
             return False
-        follower = user.follower.filter(author=obj.id).exists()
+        follower = user.followers.filter(author=obj.id).exists()
         return follower
 
 
@@ -36,36 +36,6 @@ class CustomUserCreateSerializer(UserCreateSerializer):
     class Meta:
         model = USER
         fields = ('email', 'id', 'username', 'first_name', 'last_name', 'password')
-
-
-class RecipeNestedSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
-    image = Base64ImageField(required=False, allow_null=True)
-
-    class Meta:
-        model = Recipe
-        fields = ('id', 'name', 'image', 'cooking_time')
-        read_only = fields
-
-
-class UserRecipesSerializer(CustomUserSerializer):
-    recipes = RecipeNestedSerializer(many=True)
-
-    class Meta:
-        fields = CustomUserSerializer.Meta.fields + ('recipes',)
-        depth = 1
-
-
-class FollowSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Follow
-        fields = ('user', 'author')
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Follow.objects.all(),
-                fields=('user', 'author')
-            )
-        ]
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -167,11 +137,26 @@ class RecipeSerializer(serializers.ModelSerializer):
         return instance
 
 
+class RecipeNestedSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
+
+
 class FavoriteSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField(source='recipe.id')
+    name = serializers.ReadOnlyField(source='recipe.name')
+    image = serializers.ReadOnlyField(source='recipe.image.url')
+    cooking_time = serializers.ReadOnlyField(source='recipe.cooking_time')
 
     class Meta:
         model = Favorite
-        fields = ('user', 'recipe')
+        fields = ('user', 'recipe', 'id', 'name', 'image', 'cooking_time')
+        extra_kwargs = {
+            'user': {'write_only': True},
+            'recipe': {'write_only': True},
+        }
         validators = [
             UniqueTogetherValidator(
                 queryset=Favorite.objects.all(),
@@ -180,7 +165,57 @@ class FavoriteSerializer(serializers.ModelSerializer):
         ]
 
 
+class SubscribeSerializer(serializers.ModelSerializer):
+    email = serializers.ReadOnlyField(source='author.email')
+    id = serializers.ReadOnlyField(source='author.id')
+    username = serializers.ReadOnlyField(source='author.username')
+    first_name = serializers.ReadOnlyField(source='author.first_name')
+    last_name = serializers.ReadOnlyField(source='author.last_name')
 
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
+    is_subscribed = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Follow
+        fields = (
+            'user',
+            'author',
+            'email',
+            'id',
+            'username',
+            'first_name',
+            'last_name',
+            'is_subscribed',
+            'recipes',
+            'recipes_count',
+        )
+        extra_kwargs = {
+            'user': {'write_only': True},
+            'author': {'write_only': True},
+        }
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Follow.objects.all(),
+                fields=('user', 'author'),
+            )
+        ]
+
+    def get_recipes(self, obj):
+        queryset = Recipe.objects.filter(author=obj.author)
+        serializer = RecipeNestedSerializer(queryset, many=True)
+        return serializer.data
+
+    def get_recipes_count(self, obj):
+        return Recipe.objects.filter(author=obj.author).count()
+
+    def get_is_subscribed(self, obj):
+        return True
+
+    def validate(self, data):
+        if data['user'] == data['author']:
+            raise serializers.ValidationError('Нельзя подписаться на себя!')
+        return data
 
 
 

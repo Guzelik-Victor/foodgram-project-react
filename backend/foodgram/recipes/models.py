@@ -3,6 +3,8 @@ from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 from django.db.models import UniqueConstraint
 
+
+
 user = get_user_model()
 
 
@@ -30,9 +32,13 @@ class Recipe(models.Model):
     name = models.CharField('name', max_length=200)
     image = models.ImageField('image', upload_to='recipes/images/', null=True, default=None)
     text = models.TextField(max_length=512)
-    cooking_time = models.IntegerField(validators=[MinValueValidator(1)])
+    cooking_time = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    # pub_date = models.DateTimeField(auto_now_add=True)
     ingredient = models.ManyToManyField(Ingredient, through='IngredientRecipe')
     tag = models.ManyToManyField(Tag, through='TagRecipe')
+
+    # class Meta:
+    #     ordering = ('-pub_date',)
 
 
 class TagRecipe(models.Model):
@@ -59,7 +65,7 @@ class Favorite(models.Model):
     )
 
     class Meta:
-        UniqueConstraint(fields=['user', 'recipe'], name='unique_recipe')
+        UniqueConstraint(fields=['user', 'recipe'], name='unique_favorites')
 
 
 class ShoppingList(models.Model):

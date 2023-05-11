@@ -1,13 +1,12 @@
 from django.contrib.auth import get_user_model
 from djoser.views import UserViewSet
-from rest_framework import viewsets, filters, permissions, mixins, status
+from rest_framework import viewsets, filters, permissions, status
 from rest_framework.decorators import action
-from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
-from .serializers import TagSerializer, IngredientSerializer, RecipeSerializer, FavoriteSerializer, RecipeNestedSerializer
+from .serializers import TagSerializer, IngredientSerializer, RecipeSerializer, FavoriteSerializer, SubscribeSerializer
 from recipes.models import Tag, Ingredient, Recipe, Favorite
+from users.models import Follow
 
 
 User = get_user_model()
@@ -22,9 +21,33 @@ class CustomUserViewSet(UserViewSet):
             queryset = queryset.exclude(is_staff=True)
         return queryset
 
-    # @action(methods=['list'])
-    # def subscriptions(self, request):
-    #     self.queryset = self.queryset.
+    @action(methods=['get'], detail=False)
+    def subscriptions(self, request):
+        followers = request.user.followers.all()
+        serializer = SubscribeSerializer(followers, many=True)
+        return Response(serializer.data)
+
+    @action(methods=['post', 'delete'], detail=True)
+    def subscribe(self, request, id):
+        if request.method == 'POST':
+            serializer = SubscribeSerializer(
+                data={
+                    'user': request.user.id,
+                    'author': id,
+                })
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            following = Follow.objects.filter(
+                user=request.user.id,
+                author=id,
+            )
+            if following:
+                following.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -50,31 +73,27 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         serializer.save(author=self.request.user)
 
+    @action(methods=['get'], detail=False)
+    def favorites(self, request):
+        favorites = request.user.favorites.all()
+        serializer = FavoriteSerializer(favorites, many=True)
+        return Response(serializer.data)
+
     @action(methods=['post', 'delete'], detail=True)
     def favorite(self, request, pk):
-        recipe = Recipe.objects.get(id=pk)
-        user_id = request.user.id
         if request.method == 'POST':
             serializer = FavoriteSerializer(
                 data={
-                    'user': user_id,
-                    'recipe': recipe.id,
+                    'user': request.user.id,
+                    'recipe': pk,
                 })
             if serializer.is_valid():
                 serializer.save()
-                data = {
-                    'id': recipe.id,
-                    'name': recipe.text,
-                    'image': recipe.image,
-                    'cooking_time': recipe.cooking_time,
-                }
-                serializer = RecipeNestedSerializer(data=data)
-                if serializer.is_valid():
-                    return Response(serializer.data, status=status.HTTP_201_CREATED)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
             favorite = Favorite.objects.filter(
-                user=user_id,
+                user=request.user.id,
                 recipe=pk,
             )
             if favorite:

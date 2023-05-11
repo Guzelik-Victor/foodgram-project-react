@@ -37,9 +37,3 @@ class TagListField(serializers.ListField):
         return Tag.objects.in_bulk(data)
 
 
-class RecipeObj(serializers.Field):
-
-
-    def to_internal_value(self, data):
-        data
-
