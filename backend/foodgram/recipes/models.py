@@ -2,8 +2,7 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 from django.db.models import UniqueConstraint
-
-
+# TODO абстрактная модель для Избранного и списка покупок
 
 user = get_user_model()
 
@@ -33,12 +32,12 @@ class Recipe(models.Model):
     image = models.ImageField('image', upload_to='recipes/images/', null=True, default=None)
     text = models.TextField(max_length=512)
     cooking_time = models.PositiveIntegerField(validators=[MinValueValidator(1)])
-    # pub_date = models.DateTimeField(auto_now_add=True)
+    pub_date = models.DateTimeField(auto_now_add=True)
     ingredient = models.ManyToManyField(Ingredient, through='IngredientRecipe')
     tag = models.ManyToManyField(Tag, through='TagRecipe')
 
-    # class Meta:
-    #     ordering = ('-pub_date',)
+    class Meta:
+        ordering = ('-pub_date',)
 
 
 class TagRecipe(models.Model):
@@ -68,14 +67,17 @@ class Favorite(models.Model):
         UniqueConstraint(fields=['user', 'recipe'], name='unique_favorites')
 
 
-class ShoppingList(models.Model):
+class ShoppingCart(models.Model):
     user = models.ForeignKey(
         user,
-        related_name='shopping',
+        related_name='shoppings',
         on_delete=models.CASCADE,
     )
     recipe = models.ForeignKey(
         Recipe,
-        related_name='shopping',
+        related_name='shoppings',
         on_delete=models.CASCADE,
     )
+
+    class Meta:
+        UniqueConstraint(fields=['user', 'recipe'], name='unique_shopping_cart')

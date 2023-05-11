@@ -1,11 +1,13 @@
+
+
 from django.contrib.auth import get_user_model
 from djoser.views import UserViewSet
 from rest_framework import viewsets, filters, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .serializers import TagSerializer, IngredientSerializer, RecipeSerializer, FavoriteSerializer, SubscribeSerializer
-from recipes.models import Tag, Ingredient, Recipe, Favorite
+from .serializers import TagSerializer, IngredientSerializer, RecipeSerializer, FavoriteSerializer, SubscribeSerializer, ShoppingCartSerializer
+from recipes.models import Tag, Ingredient, Recipe, Favorite, ShoppingCart
 from users.models import Follow
 
 
@@ -101,7 +103,46 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 return Response(status=status.HTTP_204_NO_CONTENT)
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
+    @action(methods=['get'], detail=False)
+    def download_shopping_cart(self, request):
+        result_shopping_cart = dict()
+        shopping_cart = request.user.shoppings.all()
+        for recipe in shopping_cart:
+            ingredients = recipe.recipe.ingredientrecipe_set.all()
+            for item in ingredients:
+                amount = item.amount
+                result_shopping_cart[item.ingredient.name] = (
+                        result_shopping_cart.get(
+                            item.ingredient.name,
+                            {'measurement_unit': item.ingredient.measurement_unit}
+                        )
+                )
+                result_shopping_cart[item.ingredient.name]['amount'] = (
+                    result_shopping_cart[item.ingredient.name].get('amount', amount) + amount
+                )
 
+        return Response()
 
+    @action(methods=['post', 'delete'], detail=True)
+    def shopping_cart(self, request, pk):
+        if request.method == 'POST':
+            serializer = ShoppingCartSerializer(
+                data={
+                    'user': request.user.id,
+                    'recipe': pk,
+                })
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            shopping_obj = ShoppingCart.objects.filter(
+                user=request.user.id,
+                recipe=pk,
+            )
+            if shopping_obj:
+                shopping_obj.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 

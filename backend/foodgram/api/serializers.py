@@ -3,7 +3,7 @@ from djoser.serializers import UserSerializer, UserCreateSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
-from recipes.models import Tag, Ingredient, Recipe, IngredientRecipe, TagRecipe, Favorite
+from recipes.models import Tag, Ingredient, Recipe, IngredientRecipe, TagRecipe, Favorite, ShoppingCart
 from users.models import Follow
 from .serializers_fields import Hex2NameColor, Base64ImageField, TagListField
 
@@ -144,27 +144,6 @@ class RecipeNestedSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'image', 'cooking_time')
 
 
-class FavoriteSerializer(serializers.ModelSerializer):
-    id = serializers.ReadOnlyField(source='recipe.id')
-    name = serializers.ReadOnlyField(source='recipe.name')
-    image = serializers.ReadOnlyField(source='recipe.image.url')
-    cooking_time = serializers.ReadOnlyField(source='recipe.cooking_time')
-
-    class Meta:
-        model = Favorite
-        fields = ('user', 'recipe', 'id', 'name', 'image', 'cooking_time')
-        extra_kwargs = {
-            'user': {'write_only': True},
-            'recipe': {'write_only': True},
-        }
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Favorite.objects.all(),
-                fields=('user', 'recipe')
-            )
-        ]
-
-
 class SubscribeSerializer(serializers.ModelSerializer):
     email = serializers.ReadOnlyField(source='author.email')
     id = serializers.ReadOnlyField(source='author.id')
@@ -216,6 +195,43 @@ class SubscribeSerializer(serializers.ModelSerializer):
         if data['user'] == data['author']:
             raise serializers.ValidationError('Нельзя подписаться на себя!')
         return data
+
+
+class FavoriteShoppingCardAbstractSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField(source='recipe.id')
+    name = serializers.ReadOnlyField(source='recipe.name')
+    image = serializers.ReadOnlyField(source='recipe.image.url')
+    cooking_time = serializers.ReadOnlyField(source='recipe.cooking_time')
+
+    class Meta:
+        model = Favorite
+        fields = ('user', 'recipe', 'id', 'name', 'image', 'cooking_time')
+        extra_kwargs = {
+            'user': {'write_only': True},
+            'recipe': {'write_only': True},
+        }
+
+    def validate(self, data):
+        obj_exists = self.Meta.model.objects.filter(
+            user=data['user'],
+            recipe=data['recipe']
+        ).exists()
+        if not obj_exists:
+            return data
+        model_name = 'избранное' if self.Meta.model == Favorite else 'список покупок'
+        raise serializers.ValidationError(f'Рецепт уже добавлен в {model_name}')
+
+
+class FavoriteSerializer(FavoriteShoppingCardAbstractSerializer):
+    pass
+
+
+class ShoppingCartSerializer(FavoriteShoppingCardAbstractSerializer):
+
+    class Meta:
+        model = ShoppingCart
+        fields = FavoriteShoppingCardAbstractSerializer.Meta.fields
+        extra_kwargs = FavoriteShoppingCardAbstractSerializer.Meta.extra_kwargs
 
 
 
