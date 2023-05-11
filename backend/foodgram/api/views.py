@@ -1,6 +1,7 @@
 
 
 from django.contrib.auth import get_user_model
+from django.http import HttpResponse
 from djoser.views import UserViewSet
 from rest_framework import viewsets, filters, permissions, status
 from rest_framework.decorators import action
@@ -105,12 +106,16 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(methods=['get'], detail=False)
     def download_shopping_cart(self, request):
+        user = request.user
+        response = HttpResponse(
+            content_type='text/csv',
+            headers={'Content-Disposition': f'attachment; filename=f"{user.username}_shopping_cart.txt"'},
+        )
         result_shopping_cart = dict()
-        shopping_cart = request.user.shoppings.all()
+        shopping_cart = user.shoppings.all()
         for recipe in shopping_cart:
             ingredients = recipe.recipe.ingredientrecipe_set.all()
             for item in ingredients:
-                amount = item.amount
                 result_shopping_cart[item.ingredient.name] = (
                         result_shopping_cart.get(
                             item.ingredient.name,
@@ -118,10 +123,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
                         )
                 )
                 result_shopping_cart[item.ingredient.name]['amount'] = (
-                    result_shopping_cart[item.ingredient.name].get('amount', amount) + amount
+                    result_shopping_cart[item.ingredient.name].get('amount', item.amount) + item.amount
                 )
 
-        return Response()
+        for key, value in sorted(result_shopping_cart.items(), key=lambda x: x[0]):
+            response.writelines(f'{key.capitalize()} ({value["measurement_unit"]}) - {value["amount"]};\n')
+        return response
 
     @action(methods=['post', 'delete'], detail=True)
     def shopping_cart(self, request, pk):

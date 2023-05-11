@@ -17,8 +17,9 @@ class Tag(models.Model):
     color = models.CharField(
         max_length=7,
         unique=True,
+        null=True,
     )
-    slug = models.SlugField(max_length=200, unique=True)
+    slug = models.SlugField(max_length=200, unique=True, null=True)
 
 
 class Recipe(models.Model):

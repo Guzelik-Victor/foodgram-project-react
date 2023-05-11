@@ -33,7 +33,7 @@ SECRET_KEY = 'django-insecure-p*0ll$pey_-*=ngp1-)3^wi0^cb_+7l&jcb9y7$o0-wwpx8ge%
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
 # Application definition
@@ -144,6 +144,7 @@ DJOSER = {
     },
     'PERMISSIONS': {
         'user_list': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],
+        'user': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],
     },
     'HIDE_USERS': False,
     'LOGIN_FIELD': 'email',

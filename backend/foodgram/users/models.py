@@ -9,7 +9,7 @@ class CustomUser(AbstractUser):
     last_name = models.CharField('last name', max_length=150)
 
     def __str__(self):
-        return f'{self.last_name} {self.first_name}'
+        return f'{self.username}'
 
 
 class Follow(models.Model):

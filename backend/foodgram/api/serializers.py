@@ -24,11 +24,11 @@ class CustomUserSerializer(UserSerializer):
         user = None
         request = self.context.get('request')
         if request and hasattr(request, 'user'):
-            user = USER.objects.get(id=request.user.id) if request.user.id else None
+            user = request.user
         if not user:
             return False
-        follower = user.followers.filter(author=obj.id).exists()
-        return follower
+        is_follower = user.followers.filter(author=obj.id).exists()
+        return is_follower
 
 
 class CustomUserCreateSerializer(UserCreateSerializer):
@@ -71,16 +71,23 @@ class RecipeSerializer(serializers.ModelSerializer):
     author = serializers.PrimaryKeyRelatedField(
         read_only=True, default=serializers.CurrentUserDefault()
     )
+    is_favorited = serializers.SerializerMethodField(read_only=True)
+    is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Recipe
-        fields = ('id', 'tags', 'author', 'ingredients', 'name', 'image', 'text', 'cooking_time')
-
-    def to_representation(self, obj):
-        self.fields['ingredients'] = IngredientSerializer(many=True, source='ingredient')
-        self.fields['tags'] = TagSerializer(many=True, source='tag')
-        self.fields['author'] = CustomUserSerializer()
-        return super().to_representation(obj)
+        fields = (
+            'id',
+            'tags',
+            'author',
+            'ingredients',
+            'is_favorited',
+            'is_in_shopping_cart',
+            'name',
+            'image',
+            'text',
+            'cooking_time',
+        )
 
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
@@ -135,6 +142,32 @@ class RecipeSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+    def to_representation(self, obj):
+        self.fields['ingredients'] = IngredientSerializer(many=True, source='ingredient')
+        self.fields['tags'] = TagSerializer(many=True, source='tag')
+        self.fields['author'] = CustomUserSerializer()
+        return super().to_representation(obj)
+
+    def get_is_favorited(self, obj):
+        user = None
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            user = request.user
+        if not user:
+            return False
+        is_favorite = user.favorites.filter(recipe=obj.id).exists()
+        return is_favorite
+
+    def get_is_in_shopping_cart(self, obj):
+        user = None
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            user = request.user
+        if not user:
+            return False
+        is_in_shopping_cart = user.shoppings.filter(recipe=obj.id).exists()
+        return is_in_shopping_cart
 
 
 class RecipeNestedSerializer(serializers.ModelSerializer):
@@ -197,7 +230,7 @@ class SubscribeSerializer(serializers.ModelSerializer):
         return data
 
 
-class FavoriteShoppingCardAbstractSerializer(serializers.ModelSerializer):
+class FavoriteShoppingCartAbstractSerializer(serializers.ModelSerializer):
     id = serializers.ReadOnlyField(source='recipe.id')
     name = serializers.ReadOnlyField(source='recipe.name')
     image = serializers.ReadOnlyField(source='recipe.image.url')
@@ -222,16 +255,16 @@ class FavoriteShoppingCardAbstractSerializer(serializers.ModelSerializer):
         raise serializers.ValidationError(f'Рецепт уже добавлен в {model_name}')
 
 
-class FavoriteSerializer(FavoriteShoppingCardAbstractSerializer):
+class FavoriteSerializer(FavoriteShoppingCartAbstractSerializer):
     pass
 
 
-class ShoppingCartSerializer(FavoriteShoppingCardAbstractSerializer):
+class ShoppingCartSerializer(FavoriteShoppingCartAbstractSerializer):
 
     class Meta:
         model = ShoppingCart
-        fields = FavoriteShoppingCardAbstractSerializer.Meta.fields
-        extra_kwargs = FavoriteShoppingCardAbstractSerializer.Meta.extra_kwargs
+        fields = FavoriteShoppingCartAbstractSerializer.Meta.fields
+        extra_kwargs = FavoriteShoppingCartAbstractSerializer.Meta.extra_kwargs
 
 
 
