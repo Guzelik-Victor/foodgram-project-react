@@ -171,6 +171,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 
 
 class RecipeNestedSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(use_url=True, allow_null=True, required=False)
 
     class Meta:
         model = Recipe
@@ -184,9 +185,9 @@ class SubscribeSerializer(serializers.ModelSerializer):
     first_name = serializers.ReadOnlyField(source='author.first_name')
     last_name = serializers.ReadOnlyField(source='author.last_name')
 
-    recipes = serializers.SerializerMethodField()
-    recipes_count = serializers.SerializerMethodField()
-    is_subscribed = serializers.SerializerMethodField()
+    recipes = serializers.SerializerMethodField(read_only=True)
+    recipes_count = serializers.SerializerMethodField(read_only=True)
+    is_subscribed = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Follow
@@ -215,7 +216,11 @@ class SubscribeSerializer(serializers.ModelSerializer):
 
     def get_recipes(self, obj):
         queryset = Recipe.objects.filter(author=obj.author)
-        serializer = RecipeNestedSerializer(queryset, many=True)
+        serializer = RecipeNestedSerializer(
+            queryset,
+            many=True,
+            context={'request': self.context.get('request')},
+        )
         return serializer.data
 
     def get_recipes_count(self, obj):
@@ -233,7 +238,7 @@ class SubscribeSerializer(serializers.ModelSerializer):
 class FavoriteShoppingCartAbstractSerializer(serializers.ModelSerializer):
     id = serializers.ReadOnlyField(source='recipe.id')
     name = serializers.ReadOnlyField(source='recipe.name')
-    image = serializers.ReadOnlyField(source='recipe.image.url')
+    image = serializers.ImageField(use_url=True, allow_null=True, required=False, source='recipe.image')
     cooking_time = serializers.ReadOnlyField(source='recipe.cooking_time')
 
     class Meta:
@@ -242,6 +247,7 @@ class FavoriteShoppingCartAbstractSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'user': {'write_only': True},
             'recipe': {'write_only': True},
+            'image': {'read_only': True},
         }
 
     def validate(self, data):

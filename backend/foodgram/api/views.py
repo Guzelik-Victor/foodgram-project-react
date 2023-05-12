@@ -37,7 +37,9 @@ class CustomUserViewSet(UserViewSet):
                 data={
                     'user': request.user.id,
                     'author': id,
-                })
+                },
+                context={'request': request},
+            )
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -89,7 +91,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 data={
                     'user': request.user.id,
                     'recipe': pk,
-                })
+                },
+                context={'request': request}
+            )
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -137,7 +141,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 data={
                     'user': request.user.id,
                     'recipe': pk,
-                })
+                },
+                context={'request': request},
+            )
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
