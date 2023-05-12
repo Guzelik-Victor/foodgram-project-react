@@ -1,11 +1,10 @@
-
-
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse
 from djoser.views import UserViewSet
 from rest_framework import viewsets, filters, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django_filters.rest_framework import DjangoFilterBackend
 
 from .serializers import TagSerializer, IngredientSerializer, RecipeSerializer, FavoriteSerializer, SubscribeSerializer, ShoppingCartSerializer
 from recipes.models import Tag, Ingredient, Recipe, Favorite, ShoppingCart
@@ -71,6 +70,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
     serializer_class = RecipeSerializer
     queryset = Recipe.objects.all()
     permission_classes = (permissions.IsAuthenticated,)
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ()
+
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)

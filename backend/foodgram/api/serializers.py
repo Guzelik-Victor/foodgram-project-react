@@ -27,7 +27,10 @@ class CustomUserSerializer(UserSerializer):
             user = request.user
         if not user:
             return False
-        is_follower = user.followers.filter(author=obj.id).exists()
+        is_follower = Follow.objects.filter(
+            user=user.id,
+            author=obj.id,
+        ).exists()
         return is_follower
 
 
@@ -156,7 +159,10 @@ class RecipeSerializer(serializers.ModelSerializer):
             user = request.user
         if not user:
             return False
-        is_favorite = user.favorites.filter(recipe=obj.id).exists()
+        is_favorite = Favorite.objects.filter(
+            user=user.id,
+            recipe=obj.id,
+        ).exists()
         return is_favorite
 
     def get_is_in_shopping_cart(self, obj):
@@ -166,7 +172,10 @@ class RecipeSerializer(serializers.ModelSerializer):
             user = request.user
         if not user:
             return False
-        is_in_shopping_cart = user.shoppings.filter(recipe=obj.id).exists()
+        is_in_shopping_cart = ShoppingCart.objects.filter(
+            user=user.id,
+            recipe=obj.id,
+        ).exists()
         return is_in_shopping_cart
 
 
