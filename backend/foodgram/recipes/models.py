@@ -21,6 +21,9 @@ class Tag(models.Model):
     )
     slug = models.SlugField(max_length=200, unique=True, null=True)
 
+    def __str__(self):
+        return self.slug
+
 
 class Recipe(models.Model):
     author = models.ForeignKey(
@@ -39,6 +42,9 @@ class Recipe(models.Model):
 
     class Meta:
         ordering = ('-pub_date',)
+
+    def __str__(self):
+        return self.name
 
 
 class TagRecipe(models.Model):

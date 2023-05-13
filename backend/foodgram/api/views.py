@@ -10,6 +10,9 @@ from .serializers import TagSerializer, IngredientSerializer, RecipeSerializer, 
 from recipes.models import Tag, Ingredient, Recipe, Favorite, ShoppingCart
 from users.models import Follow
 
+from .filters import RecipeFilters, RecipeAnonymousFilters
+from .permissions import AdminOrReadOnly, OwnerOrReadOnly
+
 
 User = get_user_model()
 
@@ -57,11 +60,13 @@ class CustomUserViewSet(UserViewSet):
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = TagSerializer
     queryset = Tag.objects.all()
+    permission_classes = (AdminOrReadOnly,)
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IngredientSerializer
     queryset = Ingredient.objects.all()
+    permission_classes = (AdminOrReadOnly,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('^name',)
 
@@ -69,16 +74,24 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     serializer_class = RecipeSerializer
     queryset = Recipe.objects.all()
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (OwnerOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ()
-
+    filterset_class = RecipeFilters
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
     def perform_update(self, serializer):
         serializer.save(author=self.request.user)
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if self.request.user.is_anonymous:
+            self.filterset_class = RecipeAnonymousFilters
+        self.filter = self.filterset_class(self.request.GET, queryset=qs)
+        return self.filter.qs
+
+
 
     @action(methods=['get'], detail=False)
     def favorites(self, request):
