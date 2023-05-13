@@ -1,8 +1,9 @@
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse
 from djoser.views import UserViewSet
-from rest_framework import viewsets, filters, permissions, status
+from rest_framework import viewsets, filters
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -12,6 +13,7 @@ from users.models import Follow
 
 from .filters import RecipeFilters, RecipeAnonymousFilters
 from .permissions import AdminOrReadOnly, OwnerOrReadOnly
+from .common import add_del_obj_action
 
 
 User = get_user_model()
@@ -26,35 +28,19 @@ class CustomUserViewSet(UserViewSet):
             queryset = queryset.exclude(is_staff=True)
         return queryset
 
-    @action(methods=['get'], detail=False)
+    @action(methods=['get'], detail=False, permission_classes=(IsAuthenticated,))
     def subscriptions(self, request):
         followers = request.user.followers.all()
         serializer = SubscribeSerializer(followers, many=True)
         return Response(serializer.data)
 
-    @action(methods=['post', 'delete'], detail=True)
+    @action(methods=['post', 'delete'], detail=True, permission_classes=(IsAuthenticated,))
     def subscribe(self, request, id):
-        if request.method == 'POST':
-            serializer = SubscribeSerializer(
-                data={
-                    'user': request.user.id,
-                    'author': id,
-                },
-                context={'request': request},
-            )
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            following = Follow.objects.filter(
-                user=request.user.id,
-                author=id,
-            )
-            if following:
-                following.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        data = {
+            'user': request.user.id,
+            'author': id,
+        }
+        return add_del_obj_action(request, Follow, SubscribeSerializer, data)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -88,47 +74,23 @@ class RecipeViewSet(viewsets.ModelViewSet):
         qs = super().get_queryset()
         if self.request.user.is_anonymous:
             self.filterset_class = RecipeAnonymousFilters
-        self.filter = self.filterset_class(self.request.GET, queryset=qs)
-        return self.filter.qs
+        return qs
 
-
-
-    @action(methods=['get'], detail=False)
-    def favorites(self, request):
-        favorites = request.user.favorites.all()
-        serializer = FavoriteSerializer(favorites, many=True)
-        return Response(serializer.data)
-
-    @action(methods=['post', 'delete'], detail=True)
+    @action(methods=['post', 'delete'], detail=True, permission_classes=(IsAuthenticated,))
     def favorite(self, request, pk):
-        if request.method == 'POST':
-            serializer = FavoriteSerializer(
-                data={
-                    'user': request.user.id,
-                    'recipe': pk,
-                },
-                context={'request': request}
-            )
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            favorite = Favorite.objects.filter(
-                user=request.user.id,
-                recipe=pk,
-            )
-            if favorite:
-                favorite.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        data = {
+            'user': request.user.id,
+            'recipe': pk,
+        }
+        return add_del_obj_action(request, Favorite, FavoriteSerializer, data)
 
-    @action(methods=['get'], detail=False)
+    @action(methods=['get'], detail=False, permission_classes=(IsAuthenticated,))
     def download_shopping_cart(self, request):
         user = request.user
         response = HttpResponse(
-            content_type='text/csv',
+            content_type='text.txt; charset=utf-8',
             headers={'Content-Disposition': f'attachment; filename=f"{user.username}_shopping_cart.txt"'},
+
         )
         result_shopping_cart = dict()
         shopping_cart = user.shoppings.all()
@@ -147,30 +109,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         for key, value in sorted(result_shopping_cart.items(), key=lambda x: x[0]):
             response.writelines(f'{key.capitalize()} ({value["measurement_unit"]}) - {value["amount"]};\n')
+
         return response
 
-    @action(methods=['post', 'delete'], detail=True)
+    @action(methods=['post', 'delete'], detail=True, permission_classes=(IsAuthenticated,))
     def shopping_cart(self, request, pk):
-        if request.method == 'POST':
-            serializer = ShoppingCartSerializer(
-                data={
-                    'user': request.user.id,
-                    'recipe': pk,
-                },
-                context={'request': request},
-            )
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            shopping_obj = ShoppingCart.objects.filter(
-                user=request.user.id,
-                recipe=pk,
-            )
-            if shopping_obj:
-                shopping_obj.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        data = {
+            'user': request.user.id,
+            'recipe': pk
+        }
+        return add_del_obj_action(request, ShoppingCart, ShoppingCartSerializer, data)
 
 

@@ -6,38 +6,33 @@ from rest_framework.validators import UniqueTogetherValidator
 from recipes.models import Tag, Ingredient, Recipe, IngredientRecipe, TagRecipe, Favorite, ShoppingCart
 from users.models import Follow
 from .serializers_fields import Hex2NameColor, Base64ImageField, TagListField
+from .common import get_is_field_action
 
-USER = get_user_model()
+User = get_user_model()
 
 
 class CustomUserSerializer(UserSerializer):
     is_subscribed = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
-        model = USER
+        model = User
         fields = ('email', 'id', 'username', 'first_name', 'last_name', 'password', 'is_subscribed')
         extra_kwargs = {
             'password': {'write_only': True},
         }
 
     def get_is_subscribed(self, obj):
-        user = None
         request = self.context.get('request')
-        if request and hasattr(request, 'user'):
-            user = request.user
-        if not user:
-            return False
-        is_follower = Follow.objects.filter(
-            user=user.id,
-            author=obj.id,
-        ).exists()
-        return is_follower
+        data = {
+            'author': obj.id
+        }
+        return get_is_field_action(request, Follow, data)
 
 
 class CustomUserCreateSerializer(UserCreateSerializer):
 
     class Meta:
-        model = USER
+        model = User
         fields = ('email', 'id', 'username', 'first_name', 'last_name', 'password')
 
 
@@ -153,30 +148,18 @@ class RecipeSerializer(serializers.ModelSerializer):
         return super().to_representation(obj)
 
     def get_is_favorited(self, obj):
-        user = None
         request = self.context.get('request')
-        if request and hasattr(request, 'user'):
-            user = request.user
-        if not user:
-            return False
-        is_favorite = Favorite.objects.filter(
-            user=user.id,
-            recipe=obj.id,
-        ).exists()
-        return is_favorite
+        data = {
+            'recipe': obj.id
+        }
+        return get_is_field_action(request, Favorite, data)
 
     def get_is_in_shopping_cart(self, obj):
-        user = None
         request = self.context.get('request')
-        if request and hasattr(request, 'user'):
-            user = request.user
-        if not user:
-            return False
-        is_in_shopping_cart = ShoppingCart.objects.filter(
-            user=user.id,
-            recipe=obj.id,
-        ).exists()
-        return is_in_shopping_cart
+        data = {
+            'recipe': obj.id
+        }
+        return get_is_field_action(request, ShoppingCart, data)
 
 
 class RecipeNestedSerializer(serializers.ModelSerializer):

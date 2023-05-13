@@ -1,7 +1,7 @@
 from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 
-class SafemethodOrAuthUserPermission(BasePermission):
+class SafeMethodOrAuthUserPermission(BasePermission):
 
     def has_permission(self, request, view):
         return (
@@ -10,18 +10,17 @@ class SafemethodOrAuthUserPermission(BasePermission):
         )
 
 
-class AdminOrReadOnly(SafemethodOrAuthUserPermission):
+class AdminOrReadOnly(SafeMethodOrAuthUserPermission):
 
     def has_object_permission(self, request, view, obj):
         return (
             request.method in SAFE_METHODS
             or request.user.is_authenticated
-            and request.user.is_active
             and request.user.is_staff
         )
 
 
-class OwnerOrReadOnly(SafemethodOrAuthUserPermission):
+class OwnerOrReadOnly(SafeMethodOrAuthUserPermission):
 
     def has_object_permission(self, request, view, obj):
         return (

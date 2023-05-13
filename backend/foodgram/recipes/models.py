@@ -2,14 +2,16 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 from django.db.models import UniqueConstraint
-# TODO абстрактная модель для Избранного и списка покупок
 
-user = get_user_model()
+User = get_user_model()
 
 
 class Ingredient(models.Model):
     name = models.CharField(max_length=254, db_index=True)
     measurement_unit = models.CharField(max_length=128)
+
+    def __str__(self):
+        return self.name
 
 
 class Tag(models.Model):
@@ -18,6 +20,7 @@ class Tag(models.Model):
         max_length=7,
         unique=True,
         null=True,
+        validators=[RegexValidator(r'^#[A-Fa-f0-9]{6}$')],
     )
     slug = models.SlugField(max_length=200, unique=True, null=True)
 
@@ -27,7 +30,7 @@ class Tag(models.Model):
 
 class Recipe(models.Model):
     author = models.ForeignKey(
-        user,
+        User,
         on_delete=models.CASCADE,
         related_name='recipes',
         verbose_name='Автор',
@@ -60,7 +63,7 @@ class IngredientRecipe(models.Model):
 
 class Favorite(models.Model):
     user = models.ForeignKey(
-        user,
+        User,
         related_name='favorites',
         on_delete=models.CASCADE,
     )
@@ -73,10 +76,13 @@ class Favorite(models.Model):
     class Meta:
         UniqueConstraint(fields=['user', 'recipe'], name='unique_favorite_recipe')
 
+    def __str__(self):
+        return f'{self.user} - {self.recipe}'
+
 
 class ShoppingCart(models.Model):
     user = models.ForeignKey(
-        user,
+        User,
         related_name='shoppings',
         on_delete=models.CASCADE,
     )
@@ -88,3 +94,6 @@ class ShoppingCart(models.Model):
 
     class Meta:
         UniqueConstraint(fields=['user', 'recipe'], name='unique_shopping_cart')
+
+    def __str__(self):
+        return f'{self.user} - {self.recipe}'

@@ -34,6 +34,7 @@ class Base64ImageField(serializers.ImageField):
 class TagListField(serializers.ListField):
 
     def to_internal_value(self, data):
+        a = 1
         return Tag.objects.in_bulk(data)
 
 

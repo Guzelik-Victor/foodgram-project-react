@@ -2,8 +2,6 @@ from django.contrib import admin
 
 from .models import Tag, Recipe, Ingredient, Favorite, ShoppingCart
 
-# Register your models here.
-
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):

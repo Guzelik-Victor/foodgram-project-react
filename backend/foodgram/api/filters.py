@@ -14,7 +14,7 @@ class RecipeAnonymousFilters(rest_framework.FilterSet):
         fields = ('tags',)
 
 
-class RecipeFilters(rest_framework.FilterSet):
+class RecipeFilters(RecipeAnonymousFilters):
     is_favorited = rest_framework.BooleanFilter(
         field_name='favorites',
         method='get_filter_queryset',
@@ -25,16 +25,11 @@ class RecipeFilters(rest_framework.FilterSet):
         method='get_filter_queryset',
         label='shopping cart',
     )
-    author = rest_framework.CharFilter(field_name='author__id')
-    tags = rest_framework.ModelMultipleChoiceFilter(
-        field_name='tag__slug',
-        queryset=Tag.objects.all(),
-        to_field_name='slug',
-    )
+    author = rest_framework.NumberFilter(field_name='author__id')
 
     class Meta:
-        model = Recipe
-        fields = ('author', 'tags')
+        model = RecipeAnonymousFilters.Meta.model
+        fields = RecipeAnonymousFilters.Meta.fields + ('author',)
 
     def get_filter_queryset(self, queryset, field_name, value):
         user = self.request.user

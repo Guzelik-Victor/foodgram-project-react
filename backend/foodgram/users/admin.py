@@ -1,9 +1,10 @@
 from django.contrib import admin
+from django.contrib.auth import get_user_model
 
-from .models import CustomUser
+User = get_user_model()
 
 
-@admin.register(CustomUser)
+@admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     list_filter = ('email', 'username')
 
