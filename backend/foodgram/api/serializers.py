@@ -1,12 +1,14 @@
 from django.contrib.auth import get_user_model
-from djoser.serializers import UserSerializer, UserCreateSerializer
+from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
-from recipes.models import Tag, Ingredient, Recipe, IngredientRecipe, TagRecipe, Favorite, ShoppingCart
+from recipes.models import (Favorite, Ingredient, IngredientRecipe, Recipe,
+                            ShoppingCart, Tag, TagRecipe)
 from users.models import Follow
-from .serializers_fields import Hex2NameColor, Base64ImageField, TagListField
+
 from .common import get_is_field_action
+from .serializers_fields import Base64ImageField, Hex2NameColor, TagListField
 
 User = get_user_model()
 
@@ -16,7 +18,15 @@ class CustomUserSerializer(UserSerializer):
 
     class Meta:
         model = User
-        fields = ('email', 'id', 'username', 'first_name', 'last_name', 'password', 'is_subscribed')
+        fields = (
+            'email',
+            'id',
+            'username',
+            'first_name',
+            'last_name',
+            'password',
+            'is_subscribed',
+        )
         extra_kwargs = {
             'password': {'write_only': True},
         }
@@ -33,7 +43,14 @@ class CustomUserCreateSerializer(UserCreateSerializer):
 
     class Meta:
         model = User
-        fields = ('email', 'id', 'username', 'first_name', 'last_name', 'password')
+        fields = (
+            'email',
+            'id',
+            'username',
+            'first_name',
+            'last_name',
+            'password',
+        )
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -142,7 +159,10 @@ class RecipeSerializer(serializers.ModelSerializer):
         return instance
 
     def to_representation(self, obj):
-        self.fields['ingredients'] = IngredientSerializer(many=True, source='ingredient')
+        self.fields['ingredients'] = IngredientSerializer(
+            many=True,
+            source='ingredient',
+        )
         self.fields['tags'] = TagSerializer(many=True, source='tag')
         self.fields['author'] = CustomUserSerializer()
         return super().to_representation(obj)
@@ -163,7 +183,11 @@ class RecipeSerializer(serializers.ModelSerializer):
 
 
 class RecipeNestedSerializer(serializers.ModelSerializer):
-    image = serializers.ImageField(use_url=True, allow_null=True, required=False)
+    image = serializers.ImageField(
+        use_url=True,
+        allow_null=True,
+        required=False,
+    )
 
     class Meta:
         model = Recipe
@@ -223,14 +247,21 @@ class SubscribeSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         if data['user'] == data['author']:
-            raise serializers.ValidationError('Нельзя подписаться на себя!')
+            raise serializers.ValidationError(
+                'Нельзя подписаться на себя!'
+            )
         return data
 
 
-class FavoriteShoppingCartAbstractSerializer(serializers.ModelSerializer):
+class FavoriteShoppingCartSerializer(serializers.ModelSerializer):
     id = serializers.ReadOnlyField(source='recipe.id')
     name = serializers.ReadOnlyField(source='recipe.name')
-    image = serializers.ImageField(use_url=True, allow_null=True, required=False, source='recipe.image')
+    image = serializers.ImageField(
+        use_url=True,
+        allow_null=True,
+        required=False,
+        source='recipe.image',
+    )
     cooking_time = serializers.ReadOnlyField(source='recipe.cooking_time')
 
     class Meta:
@@ -249,22 +280,22 @@ class FavoriteShoppingCartAbstractSerializer(serializers.ModelSerializer):
         ).exists()
         if not obj_exists:
             return data
-        model_name = 'избранное' if self.Meta.model == Favorite else 'список покупок'
-        raise serializers.ValidationError(f'Рецепт уже добавлен в {model_name}')
+        model_name = (
+            'избранное' if self.Meta.model == Favorite
+            else 'список покупок'
+        )
+        raise serializers.ValidationError(
+            f'Рецепт уже добавлен в {model_name}'
+        )
 
 
-class FavoriteSerializer(FavoriteShoppingCartAbstractSerializer):
+class FavoriteSerializer(FavoriteShoppingCartSerializer):
     pass
 
 
-class ShoppingCartSerializer(FavoriteShoppingCartAbstractSerializer):
+class ShoppingCartSerializer(FavoriteShoppingCartSerializer):
 
     class Meta:
         model = ShoppingCart
-        fields = FavoriteShoppingCartAbstractSerializer.Meta.fields
-        extra_kwargs = FavoriteShoppingCartAbstractSerializer.Meta.extra_kwargs
-
-
-
-
-
+        fields = FavoriteShoppingCartSerializer.Meta.fields
+        extra_kwargs = FavoriteShoppingCartSerializer.Meta.extra_kwargs

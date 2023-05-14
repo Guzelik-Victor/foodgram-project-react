@@ -2,6 +2,8 @@ from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 
 class SafeMethodOrAuthUserPermission(BasePermission):
+    """Доступ пользователям при безопастном запросе
+    или аутенфицированным."""
 
     def has_permission(self, request, view):
         return (
@@ -11,6 +13,7 @@ class SafeMethodOrAuthUserPermission(BasePermission):
 
 
 class AdminOrReadOnly(SafeMethodOrAuthUserPermission):
+    """Доступ к объекту только с правами не ниже администратора."""
 
     def has_object_permission(self, request, view, obj):
         return (
@@ -21,6 +24,7 @@ class AdminOrReadOnly(SafeMethodOrAuthUserPermission):
 
 
 class OwnerOrReadOnly(SafeMethodOrAuthUserPermission):
+    """Доступ к объекту только его создателю или администратору."""
 
     def has_object_permission(self, request, view, obj):
         return (

@@ -1,10 +1,11 @@
 import csv
-import os
 import logging
+import os
 import sys
-from django.core.management.base import BaseCommand
-from recipes.models import Ingredient
 
+from django.core.management.base import BaseCommand
+
+from recipes.models import Ingredient
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -21,7 +22,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         dirname = os.path.dirname(__file__)
-        file_path = os.path.join(dirname, '../../../../../data/ingredients.csv')
+        file_path = os.path.join(
+            dirname, '../../../../../data/ingredients.csv'
+        )
         try:
             with open(file_path, encoding='utf8') as file:
                 obj_list = []

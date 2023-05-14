@@ -33,14 +33,23 @@ class Recipe(models.Model):
         User,
         on_delete=models.CASCADE,
         related_name='recipes',
-        verbose_name='Автор',
     )
     name = models.CharField('name', max_length=200)
-    image = models.ImageField('image', upload_to='recipes/images/', null=True, default=None)
+    image = models.ImageField(
+        'image',
+        upload_to='recipes/images/',
+        null=True,
+        default=None,
+    )
     text = models.TextField(max_length=512)
-    cooking_time = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    cooking_time = models.PositiveIntegerField(
+        validators=[MinValueValidator(1)]
+    )
     pub_date = models.DateTimeField(auto_now_add=True)
-    ingredient = models.ManyToManyField(Ingredient, through='IngredientRecipe')
+    ingredient = models.ManyToManyField(
+        Ingredient,
+        through='IngredientRecipe'
+    )
     tag = models.ManyToManyField(Tag, through='TagRecipe')
 
     class Meta:
@@ -74,7 +83,9 @@ class Favorite(models.Model):
     )
 
     class Meta:
-        UniqueConstraint(fields=['user', 'recipe'], name='unique_favorite_recipe')
+        UniqueConstraint(
+            fields=['user', 'recipe'], name='unique_favorite_recipe'
+        )
 
     def __str__(self):
         return f'{self.user} - {self.recipe}'
@@ -93,7 +104,9 @@ class ShoppingCart(models.Model):
     )
 
     class Meta:
-        UniqueConstraint(fields=['user', 'recipe'], name='unique_shopping_cart')
+        UniqueConstraint(
+            fields=['user', 'recipe'], name='unique_shopping_cart'
+        )
 
     def __str__(self):
         return f'{self.user} - {self.recipe}'

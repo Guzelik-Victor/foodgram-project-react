@@ -1,8 +1,12 @@
 from django_filters import rest_framework
+
 from recipes.models import Recipe, Tag
 
 
 class RecipeAnonymousFilters(rest_framework.FilterSet):
+    """Воможность фильтровать рецепты только по тэгу
+    для анонимных пользователей."""
+
     tags = rest_framework.ModelMultipleChoiceFilter(
         field_name='tag__slug',
         queryset=Tag.objects.all(),
@@ -15,6 +19,8 @@ class RecipeAnonymousFilters(rest_framework.FilterSet):
 
 
 class RecipeFilters(RecipeAnonymousFilters):
+    """Фильтрация рецептов для авторизованных пользователей."""
+
     is_favorited = rest_framework.BooleanFilter(
         field_name='favorites',
         method='get_filter_queryset',

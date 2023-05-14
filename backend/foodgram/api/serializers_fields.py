@@ -1,14 +1,15 @@
-import webcolors
 import base64
 
+import webcolors
 from django.core.files.base import ContentFile
-
 from rest_framework import serializers
 
 from recipes.models import Tag
 
 
 class Hex2NameColor(serializers.Field):
+    """Кастомное поле сериализатора для конвертации кода цвета
+    в его название и наоборот."""
 
     def to_representation(self, value):
         return value
@@ -22,6 +23,8 @@ class Hex2NameColor(serializers.Field):
 
 
 class Base64ImageField(serializers.ImageField):
+    """Кастомное поле сериализатора для
+    кодирования и декодирования c помощью base64."""
 
     def to_internal_value(self, data):
         if isinstance(data, str) and data.startswith('data:image'):
@@ -32,9 +35,7 @@ class Base64ImageField(serializers.ImageField):
 
 
 class TagListField(serializers.ListField):
+    """Кастомное поле сериализатора для возврата объекто модели по id."""
 
     def to_internal_value(self, data):
-        a = 1
         return Tag.objects.in_bulk(data)
-
-
