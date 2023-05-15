@@ -4,9 +4,9 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
 from recipes.models import (Favorite, Ingredient, IngredientRecipe, Recipe,
-                            ShoppingCart, Tag, TagRecipe)
+                            ShoppingCart, Tag)
 from users.models import Follow
-from .common import get_is_field_action, create_update_instance_recipe
+from .common import create_update_instance_recipe, get_is_field_action
 from .serializers_fields import Base64ImageField, Hex2NameColor, TagListField
 
 User = get_user_model()
@@ -116,14 +116,29 @@ class RecipeSerializer(serializers.ModelSerializer):
 
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
-        super().update(instance, validated_data)
 
-        IngredientRecipe.objects.filter(recipe=instance).delete()
-        TagRecipe.objects.filter(recipe=instance).delete()
+        instance.tags.clear()
+        instance.ingredients.clear()
 
         create_update_instance_recipe(instance, ingredients, tags)
 
-        return instance
+        return super().update(instance, validated_data)
+
+    # Извини, не понимаю как подругому сделать, приходит словарь
+    # из OrderedDict,set'ом не воспользуешься без миллиона манипуляций,
+    # в AddIngredientSerializer падает по одному id, список не проверишь.
+    def validate_ingredients(self, value):
+
+        if not value:
+            raise serializers.ValidationError('Укажите ингредиенты')
+        unique_value = dict.fromkeys([v['ingredient'] for v in value])
+        if len(value) > len(unique_value):
+            raise serializers.ValidationError(
+                'Для одного блюда указывать более одного'
+                'раза один и тот же ингредиент - недопустимо'
+            )
+
+        return value
 
     def to_representation(self, obj):
         self.fields['ingredients'] = IngredientSerializer(

@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.db.models import Sum
 from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
@@ -7,7 +8,8 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
+from recipes.models import (Favorite, Ingredient, IngredientRecipe, Recipe,
+                            ShoppingCart, Tag)
 from users.models import Follow
 from .common import add_del_obj_action
 from .filters import RecipeAnonymousFilters, RecipeFilters
@@ -117,33 +119,16 @@ class RecipeViewSet(viewsets.ModelViewSet):
             },
 
         )
-        result_shopping_cart = dict()
-        shopping_cart = user.shoppings.all()
-        for recipe in shopping_cart:
-            ingredients = recipe.recipe.ingredientrecipe_set.all()
-            for item in ingredients:
-                result_shopping_cart[item.ingredient.name] = (
-                        result_shopping_cart.get(
-                            item.ingredient.name,
-                            {
-                                'measurement_unit':
-                                    item.ingredient.measurement_unit
-                            }
-                        )
-                )
-                result_shopping_cart[item.ingredient.name]['amount'] = (
-                    result_shopping_cart[item.ingredient.name].get(
-                        'amount',
-                        item.amount,
-                    ) + item.amount
-                )
+        shopping_cart = IngredientRecipe.objects.filter(
+            recipe_id__in=user.shoppings.values_list('recipe_id', flat=True)
+        ).values_list(
+            'ingredient__name', 'ingredient__measurement_unit'
+        ).annotate(Sum('amount'))
 
-        for key, value in sorted(
-                result_shopping_cart.items(), key=lambda x: x[0]
-        ):
+        for index, ingredient in enumerate(sorted(shopping_cart), start=1):
             response.writelines(
-                f'{key.capitalize()} '
-                f'({value["measurement_unit"]}) - {value["amount"]};\n'
+                f'{index}. {ingredient[0].capitalize()} '
+                f'({ingredient[1]}) - {ingredient[2]};\n'
             )
 
         return response
