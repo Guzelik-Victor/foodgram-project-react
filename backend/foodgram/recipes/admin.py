@@ -10,7 +10,7 @@ class TagAdmin(admin.ModelAdmin):
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = ('__str__', 'author')
+    list_display = ('__str__', 'id', 'author')
     readonly_fields = ('favorites',)
     fields = ('name', 'author', 'favorites',)
     list_filter = ('name', 'author', 'tag')

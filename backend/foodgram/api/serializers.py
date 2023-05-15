@@ -6,8 +6,7 @@ from rest_framework.validators import UniqueTogetherValidator
 from recipes.models import (Favorite, Ingredient, IngredientRecipe, Recipe,
                             ShoppingCart, Tag, TagRecipe)
 from users.models import Follow
-
-from .common import get_is_field_action
+from .common import get_is_field_action, create_update_instance_recipe
 from .serializers_fields import Base64ImageField, Hex2NameColor, TagListField
 
 User = get_user_model()
@@ -108,54 +107,22 @@ class RecipeSerializer(serializers.ModelSerializer):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
         recipe = Recipe.objects.create(**validated_data)
-        obj_tag_recipe = []
-        obj_ingredient_recipe = []
 
-        for ingredient in ingredients:
-            obj_ingredient_recipe.append(
-                IngredientRecipe(recipe=recipe, **ingredient)
-            )
-        IngredientRecipe.objects.bulk_create(obj_ingredient_recipe)
-
-        for tag in tags.values():
-            obj_tag_recipe.append(
-                TagRecipe(recipe=recipe, tag=tag)
-            )
-        TagRecipe.objects.bulk_create(obj_tag_recipe)
+        create_update_instance_recipe(recipe, ingredients, tags)
 
         return recipe
 
     def update(self, instance, validated_data):
 
-        instance.name = validated_data.get('name', instance.name)
-        instance.image = validated_data.get('image', instance.image)
-        instance.text = validated_data.get('text', instance.text)
-        instance.cooking_time = validated_data.get(
-            'cooking_time', instance.cooking_time
-            )
-
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
+        super().update(instance, validated_data)
 
         IngredientRecipe.objects.filter(recipe=instance).delete()
         TagRecipe.objects.filter(recipe=instance).delete()
 
-        obj_tag_recipe = []
-        obj_ingredient_recipe = []
+        create_update_instance_recipe(instance, ingredients, tags)
 
-        for ingredient in ingredients:
-            obj_ingredient_recipe.append(
-                IngredientRecipe(recipe=instance, **ingredient)
-            )
-        IngredientRecipe.objects.bulk_create(obj_ingredient_recipe)
-
-        for tag in tags.values():
-            obj_tag_recipe.append(
-                TagRecipe(recipe=instance, tag=tag)
-            )
-        TagRecipe.objects.bulk_create(obj_tag_recipe)
-
-        instance.save()
         return instance
 
     def to_representation(self, obj):

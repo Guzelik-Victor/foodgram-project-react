@@ -9,7 +9,6 @@ from rest_framework.response import Response
 
 from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 from users.models import Follow
-
 from .common import add_del_obj_action
 from .filters import RecipeAnonymousFilters, RecipeFilters
 from .permissions import AdminOrReadOnly, OwnerOrReadOnly
@@ -78,9 +77,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filterset_class = RecipeFilters
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
-
-    def perform_update(self, serializer):
         serializer.save(author=self.request.user)
 
     def get_queryset(self):

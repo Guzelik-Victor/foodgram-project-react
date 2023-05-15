@@ -1,7 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
-from django.db.models import UniqueConstraint
 
 User = get_user_model()
 
@@ -63,11 +62,26 @@ class TagRecipe(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recipe', 'tag'], name='unique_tag_for_recipe'
+            )
+        ]
+
 
 class IngredientRecipe(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
     amount = models.PositiveSmallIntegerField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recipe', 'ingredient'],
+                name='unique_ingredient_for_recipe',
+            )
+        ]
 
 
 class Favorite(models.Model):
@@ -83,9 +97,11 @@ class Favorite(models.Model):
     )
 
     class Meta:
-        UniqueConstraint(
-            fields=['user', 'recipe'], name='unique_favorite_recipe'
-        )
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'], name='unique_favorite_recipe'
+            )
+        ]
 
     def __str__(self):
         return f'{self.user} - {self.recipe}'
@@ -104,9 +120,11 @@ class ShoppingCart(models.Model):
     )
 
     class Meta:
-        UniqueConstraint(
-            fields=['user', 'recipe'], name='unique_shopping_cart'
-        )
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'], name='unique_shopping_cart'
+            )
+        ]
 
     def __str__(self):
         return f'{self.user} - {self.recipe}'
