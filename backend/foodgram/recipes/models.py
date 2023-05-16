@@ -12,9 +12,9 @@ class Ingredient(models.Model):
     class Meta:
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
-
-    def __str__(self):
-        return self.name
+    #
+    # def __str__(self):
+    #     return f'{self.id}, {self.name}'
 
 
 class Tag(models.Model):

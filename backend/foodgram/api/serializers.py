@@ -124,15 +124,12 @@ class RecipeSerializer(serializers.ModelSerializer):
 
         return super().update(instance, validated_data)
 
-    # Извини, не понимаю как подругому сделать, приходит словарь
-    # из OrderedDict,set'ом не воспользуешься без миллиона манипуляций,
-    # в AddIngredientSerializer падает по одному id, список не проверишь.
     def validate_ingredients(self, value):
 
         if not value:
             raise serializers.ValidationError('Укажите ингредиенты')
-        unique_value = dict.fromkeys([v['ingredient'] for v in value])
-        if len(value) > len(unique_value):
+        unique_id = [v['ingredient'].id for v in value]
+        if len(value) > len(set(unique_id)):
             raise serializers.ValidationError(
                 'Для одного блюда указывать более одного'
                 'раза один и тот же ингредиент - недопустимо'
