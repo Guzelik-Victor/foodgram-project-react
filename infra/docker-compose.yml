@@ -12,6 +12,7 @@ services:
     volumes:
       - ../frontend/:/app/result_build/
 
+
   backend:
     image: vguzelik/infra_backend
     volumes:
