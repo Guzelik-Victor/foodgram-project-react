@@ -138,7 +138,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         ).annotate(Sum('amount'))
 
         for index, ingredient in enumerate(sorted(shopping_cart), start=1):
-            text += f'{index}. {ingredient[0].capitalize()} '\
+            text += f'{index}. {ingredient[0].capitalize()} ' \
                     f'({ingredient[1]}) - {ingredient[2]};\n'
 
         response = HttpResponse(text, content_type='text/plain')
