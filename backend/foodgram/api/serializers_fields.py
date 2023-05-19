@@ -1,25 +1,9 @@
 import base64
 
-import webcolors
 from django.core.files.base import ContentFile
 from rest_framework import serializers
 
 from recipes.models import Tag
-
-
-class Hex2NameColor(serializers.Field):
-    """Кастомное поле сериализатора для конвертации кода цвета
-    в его название и наоборот."""
-
-    def to_representation(self, value):
-        return value
-
-    def to_internal_value(self, data):
-        try:
-            data = webcolors.hex_to_name(data)
-        except ValueError:
-            raise serializers.ValidationError('Для этого цвета нет имени')
-        return data
 
 
 class Base64ImageField(serializers.ImageField):

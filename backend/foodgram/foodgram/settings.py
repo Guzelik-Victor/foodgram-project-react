@@ -16,7 +16,7 @@ SECRET_KEY = os.getenv(
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1']
+ALLOWED_HOSTS = ['*']
 
 
 INSTALLED_APPS = [
@@ -76,11 +76,11 @@ DATABASES = {
         'ENGINE': os.getenv(
             'DB_ENGINE', default='django.db.backends.postgresql'
         ),
-        'NAME': os.getenv('DB_NAME', default='foodgrame_db'),
-        'USER': os.getenv('POSTGRES_USER', default='foodgrame_user'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', default='xxxyyyzzz'),
-        'HOST': os.getenv('DB_HOST', default='localhost'),
-        'PORT': os.getenv('DB_PORT', default='5432'),
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('POSTGRES_USER'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_PORT'),
     }
 }
 
@@ -143,6 +143,5 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

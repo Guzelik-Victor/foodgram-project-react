@@ -37,15 +37,26 @@ def create_update_instance_recipe(recipe, ingredients, tags):
     obj_tag_recipe = []
     obj_ingredient_recipe = []
 
-    for ingredient in ingredients:
-        obj_ingredient_recipe.append(
-            IngredientRecipe(recipe=recipe, **ingredient)
-        )
-    IngredientRecipe.objects.bulk_create(obj_ingredient_recipe)
+    if ingredients:
+        for data in ingredients:
+            ingredient = data.get('ingredient', None)
+            amount = data.get('amount', None)
+            if not amount or not ingredient:
+                continue
+            obj_ingredient_recipe.append(
+                IngredientRecipe(
+                    recipe=recipe,
+                    ingredient=ingredient,
+                    amount=amount,
+                )
+            )
+        IngredientRecipe.objects.bulk_create(obj_ingredient_recipe)
 
-    for tag in tags.values():
-        obj_tag_recipe.append(
-            TagRecipe(recipe=recipe, tag=tag)
-        )
-    TagRecipe.objects.bulk_create(obj_tag_recipe)
+    if tags:
+        for tag in tags.values():
+            obj_tag_recipe.append(
+                TagRecipe(recipe=recipe, tag=tag)
+            )
+        TagRecipe.objects.bulk_create(obj_tag_recipe)
+
     return

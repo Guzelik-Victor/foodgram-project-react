@@ -1,6 +1,6 @@
 from django_filters import rest_framework
 
-from recipes.models import Recipe, Tag
+from recipes.models import Ingredient, Recipe, Tag
 
 
 class RecipeAnonymousFilters(rest_framework.FilterSet):
@@ -46,3 +46,14 @@ class RecipeFilters(RecipeAnonymousFilters):
             if field_name == 'favorites'
             else user.shoppings.values_list('recipe')
         )
+
+
+class IngredientFilter(rest_framework.FilterSet):
+    name = rest_framework.CharFilter(
+        field_name='name',
+        lookup_expr='istartswith'
+    )
+
+    class Meta:
+        model = Ingredient
+        fields = ('name', 'measurement_unit')

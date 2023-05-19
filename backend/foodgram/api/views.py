@@ -3,7 +3,7 @@ from django.db.models import Sum
 from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
-from rest_framework import filters, viewsets
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -12,7 +12,8 @@ from recipes.models import (Favorite, Ingredient, IngredientRecipe, Recipe,
                             ShoppingCart, Tag)
 from users.models import Follow
 from .common import add_del_obj_action
-from .filters import RecipeAnonymousFilters, RecipeFilters
+from .filters import IngredientFilter, RecipeAnonymousFilters, RecipeFilters
+from .pagination import CustomPagination
 from .permissions import AdminOrReadOnly, OwnerOrReadOnly
 from .serializers import (FavoriteSerializer, IngredientSerializer,
                           RecipeSerializer, ShoppingCartSerializer,
@@ -22,6 +23,7 @@ User = get_user_model()
 
 
 class CustomUserViewSet(UserViewSet):
+    pagination_class = CustomPagination
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -30,14 +32,28 @@ class CustomUserViewSet(UserViewSet):
         return queryset
 
     @action(
+        methods=('get',),
+        url_path='me',
+        detail=False,
+        permission_classes=(IsAuthenticated,)
+    )
+    def get_self_page(self, request):
+        serializer = self.get_serializer(request.user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(
         methods=['get'],
         detail=False,
         permission_classes=(IsAuthenticated,),
     )
     def subscriptions(self, request):
-        followers = request.user.followers.all()
-        serializer = SubscribeSerializer(followers, many=True)
-        return Response(serializer.data)
+        followers = self.paginate_queryset(request.user.followers.all())
+        serializer = SubscribeSerializer(
+            followers,
+            many=True,
+            context={'request': request},
+        )
+        return self.get_paginated_response(serializer.data)
 
     @action(
         methods=['post', 'delete'],
@@ -61,14 +77,16 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = TagSerializer
     queryset = Tag.objects.all()
     permission_classes = (AdminOrReadOnly,)
+    pagination_class = None
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IngredientSerializer
     queryset = Ingredient.objects.all()
     permission_classes = (AdminOrReadOnly,)
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('^name',)
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = IngredientFilter
+    pagination_class = None
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -110,15 +128,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def download_shopping_cart(self, request):
         user = request.user
-        response = HttpResponse(
-            content_type='text.txt; charset=utf-8',
-            headers={
-                'Content-Disposition':
-                    f'attachment;'
-                    f'ilename=f"{user.username}_shopping_cart.txt"'
-            },
+        text = 'Cписок покупок: \n'
 
-        )
+        # Добавить ордер_бай
         shopping_cart = IngredientRecipe.objects.filter(
             recipe_id__in=user.shoppings.values_list('recipe_id', flat=True)
         ).values_list(
@@ -126,10 +138,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
         ).annotate(Sum('amount'))
 
         for index, ingredient in enumerate(sorted(shopping_cart), start=1):
-            response.writelines(
-                f'{index}. {ingredient[0].capitalize()} '
-                f'({ingredient[1]}) - {ingredient[2]};\n'
-            )
+            text += f'{index}. {ingredient[0].capitalize()} '\
+                    f'({ingredient[1]}) - {ingredient[2]};\n'
+
+        response = HttpResponse(text, content_type='text/plain')
+        response['Content-Disposition'] = (
+            'attachment; filename="shopping-list.txt"'
+        )
 
         return response
 
