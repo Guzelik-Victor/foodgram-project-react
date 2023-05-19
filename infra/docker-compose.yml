@@ -24,7 +24,6 @@ services:
       - media_value:/app/media/
     depends_on:
       - db
-      - frontend
     env_file:
       - ./.env
 
