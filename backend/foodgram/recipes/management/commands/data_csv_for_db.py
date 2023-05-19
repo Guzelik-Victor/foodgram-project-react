@@ -3,6 +3,7 @@ import logging
 import sys
 
 from django.core.management.base import BaseCommand
+
 from recipes.models import Ingredient, Tag
 
 logger = logging.getLogger(__name__)

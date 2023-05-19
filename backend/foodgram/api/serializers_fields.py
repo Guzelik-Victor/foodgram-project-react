@@ -1,8 +1,9 @@
 import base64
 
 from django.core.files.base import ContentFile
-from recipes.models import Tag
 from rest_framework import serializers
+
+from recipes.models import Tag
 
 
 class Base64ImageField(serializers.ImageField):

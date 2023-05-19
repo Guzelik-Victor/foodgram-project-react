@@ -1,6 +1,7 @@
-from recipes.models import IngredientRecipe, TagRecipe
 from rest_framework import status
 from rest_framework.response import Response
+
+from recipes.models import IngredientRecipe, TagRecipe
 
 
 def add_del_obj_action(request, model, serializer, data):

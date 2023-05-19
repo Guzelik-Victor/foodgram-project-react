@@ -46,7 +46,7 @@ pip install -r requirements.txt
 
 ### *Перейдите в директорию с файлом manage.py, создайте и примените миграции (python3 для Mac):*
 ```
-cd backend
+cd backend/foodgram
 python manage.py makemigrations
 python manage.py migrate
 ```
