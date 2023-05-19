@@ -130,7 +130,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         user = request.user
         text = 'Cписок покупок: \n'
 
-        # Добавить ордер_бай
         shopping_cart = IngredientRecipe.objects.filter(
             recipe_id__in=user.shoppings.values_list('recipe_id', flat=True)
         ).values_list(
