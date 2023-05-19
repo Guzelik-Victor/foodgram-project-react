@@ -1,10 +1,9 @@
 from django.contrib.auth import get_user_model
 from djoser.serializers import UserCreateSerializer, UserSerializer
-from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator
-
 from recipes.models import (Favorite, Ingredient, IngredientRecipe, Recipe,
                             ShoppingCart, Tag, TagRecipe)
+from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
 from users.models import Follow
 
 from .common import create_update_instance_recipe, get_is_field_action
