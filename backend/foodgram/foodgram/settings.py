@@ -14,7 +14,7 @@ SECRET_KEY = os.getenv(
     default='secret_key_^##a1)ilz@4zqj=rq&agdol^##zgl9(vs',
 )
 
-DEBUG = os.environ.get('DEBUG', default=False)
+DEBUG = os.environ.get('DEBUG', default=True)
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', default='*').split(' ')
 
 

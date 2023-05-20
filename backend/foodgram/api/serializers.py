@@ -188,7 +188,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 
         if not value:
             raise serializers.ValidationError('Укажите ингредиенты')
-        unique_id = [v['ingredient'].id for v in value]
+        unique_id = [v['id'].id for v in value]
         if len(value) > len(set(unique_id)):
             raise serializers.ValidationError(
                 'Для одного блюда указывать более одного'

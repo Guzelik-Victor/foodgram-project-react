@@ -39,7 +39,7 @@ def create_update_instance_recipe(recipe, ingredients, tags):
 
     if ingredients:
         for data in ingredients:
-            ingredient = data.get('ingredient', None)
+            ingredient = data.get('id', None)
             amount = data.get('amount', None)
             if not amount or not ingredient:
                 continue
