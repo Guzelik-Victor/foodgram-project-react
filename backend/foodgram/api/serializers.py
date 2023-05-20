@@ -177,8 +177,8 @@ class RecipeSerializer(serializers.ModelSerializer):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
 
-        IngredientRecipe.objects.filter(recipe=instance).delete()
         TagRecipe.objects.filter(recipe=instance).delete()
+        IngredientRecipe.objects.filter(recipe=instance).delete()
 
         create_update_instance_recipe(instance, ingredients, tags)
 

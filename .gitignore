@@ -1,6 +1,8 @@
 # Byte-compiled / optimized / DLL files
-backend/foodgram/users/migrations
 backend/foodgram/recipes/migrations
+backend/foodgram/users/migrations
+backend/foodgram/.env
+backend/foodgram/media/
 __pycache__/
 *.py[cod]
 *$py.class
@@ -104,7 +106,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
+infra/.env
 .venv
 env/
 venv/
