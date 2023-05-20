@@ -151,6 +151,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         methods=['post', 'delete'],
         detail=True,
         permission_classes=(IsAuthenticated,),
+        pagination_class=None,
     )
     def shopping_cart(self, request, pk):
         data = {
