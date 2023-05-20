@@ -137,7 +137,7 @@ class RecipeViewSerializer(serializers.ModelSerializer):
         return get_is_field_action(request, ShoppingCart, data)
 
 
-class RecipeSerializer(serializers.ModelSerializer):
+class RecipeCreateSerializer(serializers.ModelSerializer):
     ingredients = IngredientInRecipeSerializer(many=True)
     tags = TagListField()
     image = Base64ImageField(required=False, allow_null=True)

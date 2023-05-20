@@ -15,9 +15,9 @@ from .filters import IngredientFilter, RecipeAnonymousFilters, RecipeFilters
 from .pagination import CustomPagination
 from .permissions import AdminOrReadOnly, OwnerOrReadOnly
 from .serializers import (FavoriteSerializer, IngredientSerializer,
-                          RecipeSerializer, RecipeViewSerializer,
-                          ShoppingCartSerializer, SubscribeSerializer,
-                          TagSerializer)
+                          RecipeViewSerializer, ShoppingCartSerializer,
+                          SubscribeSerializer, TagSerializer,
+                          RecipeCreateSerializer)
 
 User = get_user_model()
 
@@ -98,7 +98,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.request.method == 'GET':
             return RecipeViewSerializer
-        return RecipeSerializer
+        return RecipeCreateSerializer
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
