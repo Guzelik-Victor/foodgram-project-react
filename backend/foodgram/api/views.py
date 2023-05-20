@@ -94,6 +94,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     permission_classes = (OwnerOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilters
+    pagination_class = CustomPagination
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
@@ -156,7 +157,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         methods=['post', 'delete'],
         detail=True,
         permission_classes=(IsAuthenticated,),
-        pagination_class=None,
     )
     def shopping_cart(self, request, pk):
         data = {
