@@ -17,7 +17,8 @@ from .pagination import CustomPagination
 from .permissions import AdminOrReadOnly, OwnerOrReadOnly
 from .serializers import (FavoriteSerializer, IngredientSerializer,
                           RecipeSerializer, ShoppingCartSerializer,
-                          SubscribeSerializer, TagSerializer, RecipeViewSerializer)
+                          SubscribeSerializer, TagSerializer,
+                          RecipeViewSerializer)
 
 User = get_user_model()
 
