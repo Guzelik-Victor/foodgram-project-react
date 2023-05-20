@@ -17,7 +17,7 @@ from .pagination import CustomPagination
 from .permissions import AdminOrReadOnly, OwnerOrReadOnly
 from .serializers import (FavoriteSerializer, IngredientSerializer,
                           RecipeSerializer, ShoppingCartSerializer,
-                          SubscribeSerializer, TagSerializer)
+                          SubscribeSerializer, TagSerializer, RecipeViewSerializer)
 
 User = get_user_model()
 
@@ -90,11 +90,15 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    serializer_class = RecipeSerializer
     queryset = Recipe.objects.all()
     permission_classes = (OwnerOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilters
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return RecipeViewSerializer
+        return RecipeSerializer
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
