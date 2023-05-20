@@ -17,7 +17,7 @@ from .permissions import AdminOrReadOnly, OwnerOrReadOnly
 from .serializers import (FavoriteSerializer, IngredientSerializer,
                           RecipeViewSerializer, ShoppingCartSerializer,
                           SubscribeSerializer, TagSerializer,
-                          RecipeCreateSerializer)
+                          RecipeSerializer)
 
 User = get_user_model()
 
@@ -98,7 +98,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.request.method == 'GET':
             return RecipeViewSerializer
-        return RecipeCreateSerializer
+        return RecipeSerializer
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)

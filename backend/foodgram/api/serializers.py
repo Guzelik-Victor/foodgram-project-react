@@ -65,9 +65,28 @@ class IngredientSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'measurement_unit')
 
 
+# class IngredientInRecipeSerializer(serializers.ModelSerializer):
+#     id = serializers.PrimaryKeyRelatedField(
+#         queryset=Ingredient.objects.all()
+#     )
+#     amount = serializers.IntegerField()
+#
+#     class Meta:
+#         model = IngredientRecipe
+#         fields = ('id', 'amount')
+#
+#         def validate_amount(self, value):
+#             if int(value) < 1:
+#                 raise serializers.ValidationError(
+#                     'Количество ингредиента должно быть больше нуля!'
+#                 )
+#             return value
+
+
 class IngredientInRecipeSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(
-        queryset=Ingredient.objects.all()
+        queryset=Ingredient.objects.all(),
+        source='ingredient.id'
     )
     name = serializers.ReadOnlyField(source='ingredient.name')
     measurement_unit = serializers.ReadOnlyField(
@@ -137,7 +156,7 @@ class RecipeViewSerializer(serializers.ModelSerializer):
         return get_is_field_action(request, ShoppingCart, data)
 
 
-class RecipeCreateSerializer(serializers.ModelSerializer):
+class RecipeSerializer(serializers.ModelSerializer):
     ingredients = IngredientInRecipeSerializer(many=True)
     tags = TagListField()
     image = Base64ImageField(required=False, allow_null=True)
@@ -187,7 +206,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
 
         if not value:
             raise serializers.ValidationError('Укажите ингредиенты')
-        unique_id = [v['id'].id for v in value]
+        unique_id = [v['ingredient'].get('id') for v in value]
         if len(value) > len(set(unique_id)):
             raise serializers.ValidationError(
                 'Для одного блюда указывать более одного'

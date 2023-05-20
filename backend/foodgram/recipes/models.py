@@ -99,8 +99,16 @@ class TagRecipe(models.Model):
 
 
 class IngredientRecipe(models.Model):
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
-    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(
+        Recipe,
+        related_name='recipes',
+        on_delete=models.CASCADE,
+    )
+    ingredient = models.ForeignKey(
+        Ingredient,
+        related_name='ingredients',
+        on_delete=models.CASCADE,
+    )
     amount = models.PositiveSmallIntegerField('Количество')
 
     class Meta:
@@ -110,6 +118,12 @@ class IngredientRecipe(models.Model):
                 name='unique_ingredient_for_recipe',
             )
         ]
+
+    def __str__(self):
+        return (f'{self.recipe.name}: '
+                f'{self.ingredient.name} - '
+                f'{self.amount} '
+                f'{self.ingredient.measurement_unit}')
 
 
 class Favorite(models.Model):

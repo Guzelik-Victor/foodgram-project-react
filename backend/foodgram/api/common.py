@@ -39,7 +39,9 @@ def create_update_instance_recipe(recipe, ingredients, tags):
     for data in ingredients:
         obj_ingredient_recipe.append(
             IngredientRecipe(
-                recipe=recipe, ingredient=data['id'], amount=data['amount']
+                recipe=recipe,
+                ingredient=data['ingredient'].get('id'),
+                amount=data.get('amount'),
             )
         )
     IngredientRecipe.objects.bulk_create(obj_ingredient_recipe)
