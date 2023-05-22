@@ -96,11 +96,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filterset_class = RecipeFilters
     pagination_class = CustomPagination
 
-    def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return RecipeViewSerializer
-        return RecipeSerializer
-
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
