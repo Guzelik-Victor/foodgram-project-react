@@ -15,9 +15,8 @@ from .filters import IngredientFilter, RecipeAnonymousFilters, RecipeFilters
 from .pagination import CustomPagination
 from .permissions import AdminOrReadOnly, OwnerOrReadOnly
 from .serializers import (FavoriteSerializer, IngredientSerializer,
-                          RecipeViewSerializer, ShoppingCartSerializer,
-                          SubscribeSerializer, TagSerializer,
-                          RecipeSerializer)
+                          ShoppingCartSerializer, SubscribeSerializer,
+                          TagSerializer)
 
 User = get_user_model()
 

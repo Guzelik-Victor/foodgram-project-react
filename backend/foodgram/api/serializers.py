@@ -65,24 +65,6 @@ class IngredientSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'measurement_unit')
 
 
-# class IngredientInRecipeSerializer(serializers.ModelSerializer):
-#     id = serializers.PrimaryKeyRelatedField(
-#         queryset=Ingredient.objects.all()
-#     )
-#     amount = serializers.IntegerField()
-#
-#     class Meta:
-#         model = IngredientRecipe
-#         fields = ('id', 'amount')
-#
-#         def validate_amount(self, value):
-#             if int(value) < 1:
-#                 raise serializers.ValidationError(
-#                     'Количество ингредиента должно быть больше нуля!'
-#                 )
-#             return value
-
-
 class IngredientInRecipeSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(
         queryset=Ingredient.objects.all(),
